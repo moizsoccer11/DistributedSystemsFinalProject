@@ -10,35 +10,9 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 public class Server {
-    
-    //Main Function
-    public static void main(String[] args) {
-        //Queues:
-        //Science Question Queues
-        Queue<String> scienceQueue = new LinkedList<>();
-        //Math Question Queues
-        Queue<String> mathQueue = new LinkedList<>();
-        //English Question Queue
-        Queue<String> englishQueue = new LinkedList<>();
-
+    //Other functions
+    public static void getAllQuestionsForQueues(Queue<String> scienceQueue,Queue<String> mathQueue,Queue<String> englishQueue){
         try {
-
-            //Create Z Context
-            ZContext context = new ZContext(1);
-
-            //Create Sockets
-            ZMQ.Socket queue = context.createSocket(SocketType.PULL); //Data recieved from Publisher
-            ZMQ.Socket requestSocket = context.createSocket(SocketType.PULL); //Data requested by Subscriber
-            ZMQ.Socket responseSocket = context.createSocket(SocketType.PUSH); //Data sent to Subscriber
-            
-            //bindings
-            queue.bind("tcp://*:5555");
-            requestSocket.bind("tcp://*:5556");
-            responseSocket.bind("tcp://*:5557");
-
-            //
-            System.out.println("Server Started....");
-
             //Get All Questions from Database and put in the Queues
             Connection db = DatabaseConnection.getConnection();
             //Science Queue Retrieval:
@@ -78,6 +52,42 @@ public class Server {
             }
             //Close Database connection
             db.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    //Main Function
+    public static void main(String[] args) {
+        //Queues:
+        //Science Question Queues
+        Queue<String> scienceQueue = new LinkedList<>();
+        //Math Question Queues
+        Queue<String> mathQueue = new LinkedList<>();
+        //English Question Queue
+        Queue<String> englishQueue = new LinkedList<>();
+
+        try {
+
+            //Create Z Context
+            ZContext context = new ZContext(1);
+
+            //Create Sockets
+            ZMQ.Socket queue = context.createSocket(SocketType.PULL); //Data recieved from Publisher
+            ZMQ.Socket requestSocket = context.createSocket(SocketType.PULL); //Data requested by Subscriber
+            ZMQ.Socket responseSocket = context.createSocket(SocketType.PUSH); //Data sent to Subscriber
+            
+            //bindings
+            queue.bind("tcp://*:5555");
+            requestSocket.bind("tcp://*:5556");
+            responseSocket.bind("tcp://*:5557");
+
+            //
+            System.out.println("Server Started....");
+            //Get all questions for queues:
+            getAllQuestionsForQueues(scienceQueue, mathQueue, englishQueue);
+            Connection db;
+            PreparedStatement preparedStatement;
             //Begin Pub/Sub 
             while(true){
                 String[] splitter = new String[2];
