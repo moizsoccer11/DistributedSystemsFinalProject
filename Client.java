@@ -54,7 +54,7 @@ public class Client{
             ZMQ.Context context = ZMQ.context(1);
             //Create Buffered Reader
             stdIn = new BufferedReader(new InputStreamReader(System.in));
-            //Login User
+            //Login User Sequence
             System.out.println("Welcome to Quiz System! If you have a Login ID please Enter, If you don't type '1'");
             userInput= stdIn.readLine();
             if(userInput.equals("1")){
@@ -103,7 +103,7 @@ public class Client{
                 System.out.println("-------------------------\n");
                 System.out.println("1 - Add a quiz question");
                 System.out.println("2 - Get quiz question(s)");
-                System.out.println("3 - Generate a random test based on a subject");
+                System.out.println("3 - Generate a random test");
                 System.out.println("4 - View my submitted questions");
                 System.out.println("5 - Quit\n");
 
@@ -146,6 +146,7 @@ public class Client{
                                 System.out.println("Enter the Math Question:\n");
                                 userInput=stdIn.readLine();
                                 question=userInput;
+                                break;
                             }
                             case "3":{
                                 subject= "English";
@@ -153,6 +154,7 @@ public class Client{
                                 System.out.println("Enter the English Question:\n");
                                 userInput=stdIn.readLine();
                                 question=userInput;
+                                break;
                             }
                                 
                             case "4":{
@@ -167,10 +169,97 @@ public class Client{
                         publisher.send(questionByteForm);
                         //Notfiy user the question is sent
                         System.out.println("Your question has been sent, Thanks!");
+                        break;
+                    }
+                    case "2":{
+                        //Client enter worker mode
+                        ZContext context2 = new ZContext();
+                        //Create Sockets
+                        ZMQ.Socket worker = context2.createSocket(SocketType.PULL);
+                        ZMQ.Socket requestSocket = context2.createSocket(SocketType.PUSH);
+                        //Bindings
+                        worker.connect("tcp://localhost:5557");
+                        requestSocket.connect("tcp://localhost:5556");
+                        //Get the amount of questions to recieve from client
+                        String numOfQuestion;
+                        String subject;
+                        String data;
+                        System.out.println("Enter the Amount of Questions To Retrieve:");
+                        numOfQuestion = stdIn.readLine();
+                        //Get subject of question
+                        System.out.println("Select the following subject for the all questions:");
+                        System.out.println("-------------------------\n");
+                        System.out.println("1 - Science");
+                        System.out.println("2 - Math");
+                        System.out.println("3 - English");
+                        System.out.println("4 - Quit\n");
+                        userInput=stdIn.readLine();
+                        switch (userInput) {
+                            case "1":{
+                                subject="Science";
+                                data=numOfQuestion+"/"+subject;
+                                int recievedQuestions=0;
+                                //Send the request for the questions
+                                requestSocket.send(data,0);
+
+                                //Recieve Questions
+                                System.out.println("Waiting to recieve questions from queue...\n");
+                                while(recievedQuestions != Integer.parseInt(numOfQuestion)){
+                                    byte[] questionFromQueue = worker.recv(ZMQ.NOBLOCK);
+                                    if(questionFromQueue !=null){
+                                        System.out.println(subject+" Question: "+ new String(questionFromQueue, ZMQ.CHARSET)+"\n");
+                                        recievedQuestions++;
+                                    }
+                                }
+                                Thread.sleep(1000);
+                                break;
+                            }
+                            case "2":{
+                                subject="Math";
+                                data=numOfQuestion+"/"+subject;
+                                int recievedQuestions=0;
+                                //Send the request for the questions
+                                requestSocket.send(data,0);
+
+                                //Recieve Questions
+                                System.out.println("Waiting to recieve questions from queue...\n");
+                                while(recievedQuestions != Integer.parseInt(numOfQuestion)){
+                                    byte[] questionFromQueue = worker.recv(ZMQ.NOBLOCK);
+                                    if(questionFromQueue !=null){
+                                        System.out.println(subject+" Question: "+ new String(questionFromQueue, ZMQ.CHARSET)+"\n");
+                                        recievedQuestions++;
+                                    }
+                                }
+                                Thread.sleep(1000);
+                                break;
+                            }
+                            case "3":{
+                                subject="English";
+                                data=numOfQuestion+"/"+subject;
+                                int recievedQuestions=0;
+                                //Send the request for the questions
+                                requestSocket.send(data,0);
+
+                                //Recieve Questions
+                                System.out.println("Waiting to recieve questions from queue...\n");
+                                while(recievedQuestions != Integer.parseInt(numOfQuestion)){
+                                    byte[] questionFromQueue = worker.recv(ZMQ.NOBLOCK);
+                                    if(questionFromQueue !=null){
+                                        System.out.println(subject+" Question: "+ new String(questionFromQueue, ZMQ.CHARSET)+"\n");
+                                        recievedQuestions++;
+                                    }
+                                }
+                                Thread.sleep(1000);
+                                break;
+                            }
+                            case "4":{
+                                break;
+                            }
+                                
+                        }
                     }
                 }
             }
-            
 
         } catch (Exception e) {
             // TODO: handle exception

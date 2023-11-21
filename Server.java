@@ -1,6 +1,7 @@
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -37,7 +38,47 @@ public class Server {
 
             //
             System.out.println("Server Started....");
-            //
+
+            //Get All Questions from Database and put in the Queues
+            Connection db = DatabaseConnection.getConnection();
+            //Science Queue Retrieval:
+            // Retrieve all questions from the 'sciencequestions' table
+            String selectQuery = "SELECT question FROM sciencequestions";
+            PreparedStatement preparedStatement = db.prepareStatement(selectQuery);
+            ResultSet resultSet = preparedStatement.executeQuery(); {
+                // Iterate through the result set and add questions to the queue
+                while (resultSet.next()) {
+                    String question = resultSet.getString("question");
+                    scienceQueue.offer(question);
+                }
+            }
+
+            //Math Queue Retrieval:
+            // Retrieve all questions from the 'mathquestions' table
+            selectQuery = "SELECT question FROM mathquestions";
+            preparedStatement = db.prepareStatement(selectQuery);
+            resultSet = preparedStatement.executeQuery(); {
+                // Iterate through the result set and add questions to the queue
+                while (resultSet.next()) {
+                    String question = resultSet.getString("question");
+                    mathQueue.offer(question);
+                }
+            }
+
+            //English Queue Retrieval:
+            // Retrieve all questions from the 'mathquestions' table
+            selectQuery = "SELECT question FROM englishquestions";
+            preparedStatement = db.prepareStatement(selectQuery);
+            resultSet = preparedStatement.executeQuery(); {
+                // Iterate through the result set and add questions to the queue
+                while (resultSet.next()) {
+                    String question = resultSet.getString("question");
+                    englishQueue.offer(question);
+                }
+            }
+            //Close Database connection
+            db.close();
+            //Begin Pub/Sub 
             while(true){
                 String[] splitter = new String[2];
                 //Check if any data has been sent by publisher
@@ -53,12 +94,12 @@ public class Server {
                         case "Science":{
                             scienceQueue.offer(question);
                             //Open Database connection:
-                            Connection db = DatabaseConnection.getConnection();
+                            db = DatabaseConnection.getConnection();
                             // Insert data into the 'sciencequestion' table
                             String insertQuery = "INSERT INTO sciencequestions (question) VALUES (?)";
                             //Prepare statement
                             try {
-                                PreparedStatement preparedStatement = db.prepareStatement(insertQuery);
+                                preparedStatement = db.prepareStatement(insertQuery);
                                 preparedStatement.setString(1, question);
                                 //execute query
                                 int rowsAffected = preparedStatement.executeUpdate();
@@ -73,16 +114,17 @@ public class Server {
                             } catch (SQLException e) {
                                 e.printStackTrace();
                             }
+                            break;
                         }
                         case "Math":{
                             mathQueue.offer(question);
                              //Open Database connection:
-                            Connection db = DatabaseConnection.getConnection();
+                            db = DatabaseConnection.getConnection();
                             // Insert data into the 'sciencequestion' table
                             String insertQuery = "INSERT INTO mathquestions (question) VALUES (?)";
                             //Prepare statement
                             try {
-                                PreparedStatement preparedStatement = db.prepareStatement(insertQuery);
+                                preparedStatement = db.prepareStatement(insertQuery);
                                 preparedStatement.setString(1, question);
                                 //execute query
                                 int rowsAffected = preparedStatement.executeUpdate();
@@ -97,16 +139,17 @@ public class Server {
                             } catch (SQLException e) {
                                 e.printStackTrace();
                             }
+                            break;
                         }
                         case "English":{
                             englishQueue.offer(question);
                              //Open Database connection:
-                            Connection db = DatabaseConnection.getConnection();
+                            db = DatabaseConnection.getConnection();
                             // Insert data into the 'sciencequestion' table
                             String insertQuery = "INSERT INTO englishquestions (question) VALUES (?)";
                             //Prepare statement
                             try {
-                                PreparedStatement preparedStatement = db.prepareStatement(insertQuery);
+                                preparedStatement = db.prepareStatement(insertQuery);
                                 preparedStatement.setString(1, question);
                                 //execute query
                                 int rowsAffected = preparedStatement.executeUpdate();
@@ -121,25 +164,54 @@ public class Server {
                             } catch (SQLException e) {
                                 e.printStackTrace();
                             }
+                            break;
                         }
                     }
                 }
                 //Check for any incoming requests for data/questions
+                //Incoming workers
+                byte[] requestBytes =requestSocket.recv(ZMQ.NOBLOCK);
+                if(requestBytes != null){
+                    //Save the recieved request in string
+                    String request= new String(requestBytes,ZMQ.CHARSET);
+                    System.out.println(request);
+                    splitter=request.split("/");
+                    if(splitter[1].equals("Science")){
+                       for(int i=0; i<Integer.parseInt(splitter[0]); i++){
+                            //deqeue a task from queue
+                            String nextQuestion = scienceQueue.poll();
+                            //check if there is a task
+                            if(nextQuestion != null){
+                                System.out.println("Sending Question:" + nextQuestion);
+                                responseSocket.send(nextQuestion.getBytes(),0);
+                            }
+                        }
+                    }
+                    if(splitter[1].equals("Math")){
+                       for(int i=0; i<Integer.parseInt(splitter[0]); i++){
+                            //deqeue a task from queue
+                            String nextQuestion = mathQueue.poll();
+                            //check if there is a task
+                            if(nextQuestion != null){
+                                System.out.println("Sending Question:" + nextQuestion);
+                                responseSocket.send(nextQuestion.getBytes(),0);
+                            }
+                        }
+                    }
+                    if(splitter[1].equals("English")){
+                       for(int i=0; i<Integer.parseInt(splitter[0]); i++){
+                            //deqeue a task from queue
+                            String nextQuestion = englishQueue.poll();
+                            //check if there is a task
+                            if(nextQuestion != null){
+                                System.out.println("Sending Question:" + nextQuestion);
+                                responseSocket.send(nextQuestion.getBytes(),0);
+                            }
+                        }
+                    }
+                }
 
             }
-
-
-            
-
-
-
-
-
-
-
-
-
-
 
         } catch (Exception e) {
             e.printStackTrace();
