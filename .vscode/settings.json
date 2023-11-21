@@ -1,0 +1,7 @@
+{
+	"java.project.referencedLibraries": [
+		"lib/**/*.jar",
+		"jars/jeromq.jar",
+		"jars/mysql-connector-j-8.2.0.jar"
+	]
+}
