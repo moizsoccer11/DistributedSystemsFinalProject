@@ -5,9 +5,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 //import java.nio.charset.Charset;
 import java.util.Scanner;
 import org.zeromq.ZMQ;
+
+import com.mysql.cj.jdbc.exceptions.SQLError;
+
 import org.zeromq.ZContext;
 import org.zeromq.SocketType;
 //A teacher(client) can act as a publisher and a worker, depending on if they are adding to queue or requesting from queue
@@ -161,6 +168,18 @@ public class Client{
                                 break;
                             }
                         }
+                        //Add their question to database to be viewed when they wish to
+                        Connection db = DatabaseConnection.getConnection();
+                        // Insert Query
+                        String insertQuery = "INSERT INTO clientquestions (userName, question, subject) VALUES (?, ?, ?)";
+                        PreparedStatement preparedStatement = db.prepareStatement(insertQuery); {
+                            preparedStatement.setString(1, userName);
+                            preparedStatement.setString(2, question);
+                            preparedStatement.setString(3, subject);
+                        }
+                        // Execute the insert query
+                        preparedStatement.executeUpdate();
+                        db.close();
                         //Combine the question with subject by delimeter
                         question = question + "/" + subject;
                         //Send to queue
@@ -257,6 +276,37 @@ public class Client{
                             }
                                 
                         }
+                    }
+
+
+
+
+                    case "4":{
+                        try {
+                            Connection db = DatabaseConnection.getConnection();
+                            // Query
+                            String selectQuery = "SELECT question, subject FROM clientquestions WHERE userName = ?";
+                            //Prepare statement
+                            PreparedStatement preparedStatement = db.prepareStatement(selectQuery); {
+                                preparedStatement.setString(1, userName);
+                                ResultSet resultSet = preparedStatement.executeQuery(); {
+                                    System.out.println("Your Submitted Questions: \n");
+                                    while (resultSet.next()) {
+                                        // Retrieve question and subject from the result set
+                                        String question = resultSet.getString("question");
+                                        String subject = resultSet.getString("subject");
+                                        // Print questions
+                                        System.out.println("Question: " + question);
+                                        System.out.println("Subject: " + subject);
+                                        System.out.println("------");
+                                    }
+                                }
+                            }
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                        Thread.sleep(1000);
+                        break;
                     }
                 }
             }
