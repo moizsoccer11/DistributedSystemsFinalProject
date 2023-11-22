@@ -13,8 +13,6 @@ import java.sql.SQLException;
 import java.util.Scanner;
 import org.zeromq.ZMQ;
 
-import com.mysql.cj.jdbc.exceptions.SQLError;
-
 import org.zeromq.ZContext;
 import org.zeromq.SocketType;
 //A teacher(client) can act as a publisher and a worker, depending on if they are adding to queue or requesting from queue
@@ -190,6 +188,7 @@ public class Client{
                         System.out.println("Your question has been sent, Thanks!");
                         break;
                     }
+                    //Get Quiz Questions
                     case "2":{
                         //Client enter worker mode
                         ZContext context2 = new ZContext();
@@ -277,10 +276,11 @@ public class Client{
                                 
                         }
                     }
+                    //Generate Random Test
+                    case "3":{
 
-
-
-
+                    }
+                    //View Own Submitted Questions
                     case "4":{
                         try {
                             Connection db = DatabaseConnection.getConnection();
