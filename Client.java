@@ -12,7 +12,6 @@ import java.sql.SQLException;
 //import java.nio.charset.Charset;
 import java.util.Scanner;
 import org.zeromq.ZMQ;
-
 import org.zeromq.ZContext;
 import org.zeromq.SocketType;
 //A teacher(client) can act as a publisher and a worker, depending on if they are adding to queue or requesting from queue
@@ -36,10 +35,10 @@ public class Client{
         return loginDetails;
     }
     //Function to Create new User Login ID
-    public static void CreateLoginID(String userName, String loginID){
+    public static void CreateLoginID(String loginID, String userName){
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("login.txt",true));
-                writer.write(loginID+"/"+userName);
+                writer.write(userName+"/"+loginID);
                 writer.newLine();
                 writer.close();
             } catch (IOException e) {
@@ -54,6 +53,7 @@ public class Client{
         String userName="";
         String[] loginDetails={};
         String userInput;
+        boolean running = true;
         try {
             //Create Z Context
             ZMQ.Context context = ZMQ.context(1);
@@ -76,7 +76,7 @@ public class Client{
                 loginDetails = GetLoginDetails(userInput);
                 if(loginDetails.length > 1){
                     loggedIn=true;
-                    userName=loginDetails[1];
+                    userName=loginDetails[0];
                 }
             }
             while(!loggedIn){
@@ -96,19 +96,19 @@ public class Client{
                     loginDetails = GetLoginDetails(userInput);
                     if(loginDetails.length > 1){
                         loggedIn=true;
-                        userName=loginDetails[1];
+                        userName=loginDetails[0];
                     }
                 }
             }
             //Welcome the client
             System.out.println("Welcome "+userName+"!\n");
             //Once Logged in determine If Client wants to add questions to Quiz System or Take Questions from Queue
-            while(true){
+            while(running){
                 System.out.println("Select the following services:");
                 System.out.println("-------------------------\n");
                 System.out.println("1 - Add a quiz question");
                 System.out.println("2 - Get quiz question(s)");
-                System.out.println("3 - Generate a random test");
+                System.out.println("3 - Generate a test");
                 System.out.println("4 - View my submitted questions");
                 System.out.println("5 - Quit\n");
 
@@ -275,10 +275,92 @@ public class Client{
                             }
                                 
                         }
+                        break;
                     }
                     //Generate Random Test
                     case "3":{
 
+                        //Client enter worker mode
+                        ZContext context2 = new ZContext();
+                        //Create Sockets
+                        ZMQ.Socket worker = context2.createSocket(SocketType.PULL);
+                        ZMQ.Socket requestSocket = context2.createSocket(SocketType.PUSH);
+                        //Bindings
+                        worker.connect("tcp://localhost:5557");
+                        requestSocket.connect("tcp://localhost:5556");
+                        //Get the amount of questions to recieve from client
+                        String subject="";
+                        String data;
+                        //Get subject of question
+                        System.out.println("Select the following subject for the test:");
+                        System.out.println("-------------------------\n");
+                        System.out.println("1 - Science");
+                        System.out.println("2 - Math");
+                        System.out.println("3 - English");
+                        System.out.println("4 - Quit\n");
+                        userInput=stdIn.readLine();
+                        switch (userInput) {
+                            case "1":{
+                                subject="Science";
+                                data=10+"/"+subject;
+                                //Send the request for the questions
+                                requestSocket.send(data,0);
+
+                                break;
+                            }
+                            case "2":{
+                                subject="Math";
+                                data=10+"/"+subject;
+                                //Send the request for the questions
+                                requestSocket.send(data,0);
+                                break;
+                            }
+                            case "3":{
+                                subject="English";
+                                data=10+"/"+subject;
+                                //Send the request for the questions
+                                requestSocket.send(data,0);
+
+                                break;
+                            }
+                            case "4":{
+                                break;
+                            }
+                        }
+                         //Create the new file with the test questions
+                            int recievedQuestions =0;
+                            // Specify the file path
+                            String filePath = "test.txt";
+                            try {
+                                 // Create a File object representing the file
+                                File file = new File(filePath);
+
+                                // Check if the file already exists
+                                if (!file.exists()) {
+                                    // If the file doesn't exist, create a new file
+                                    file.createNewFile();
+                                    System.out.println("File created: " + filePath);
+                                }
+                                // Wrap the FileWriter in a BufferedWriter for efficient writing
+                                BufferedWriter writer = new BufferedWriter(new FileWriter("test.txt",false));
+                                //Setup Test
+                                writer.write(subject +" Test:\n\n");
+                                while(recievedQuestions != 10){
+                                    byte[] questionFromQueue = worker.recv(ZMQ.NOBLOCK);
+                                    if(questionFromQueue !=null){
+                                        writer.write("Question: "+ new String(questionFromQueue, ZMQ.CHARSET)+"\n\n\n\n\n");
+                                        recievedQuestions++;
+                                    }
+                                }
+                                System.out.println("Test Created: test.txt");
+                                writer.close();
+                                Thread.sleep(1000);
+
+                            } catch (Exception e) {
+                                // TODO: handle exception
+                            }
+                        break;
+                        
                     }
                     //View Own Submitted Questions
                     case "4":{
@@ -306,6 +388,10 @@ public class Client{
                             e.printStackTrace();
                         }
                         Thread.sleep(1000);
+                        break;
+                    }
+                    case "5":{
+                        running=false;
                         break;
                     }
                 }

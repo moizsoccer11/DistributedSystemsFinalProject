@@ -84,6 +84,8 @@ public class Server {
 
             //
             System.out.println("Server Started....");
+            //create tables if not made
+            DatabaseConnection.createSQLiteTables();
             //Get all questions for queues:
             getAllQuestionsForQueues(scienceQueue, mathQueue, englishQueue);
             Connection db;
@@ -184,7 +186,6 @@ public class Server {
                 if(requestBytes != null){
                     //Save the recieved request in string
                     String request= new String(requestBytes,ZMQ.CHARSET);
-                    System.out.println(request);
                     splitter=request.split("/");
                     if(splitter[1].equals("Science")){
                        for(int i=0; i<Integer.parseInt(splitter[0]); i++){
