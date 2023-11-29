@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Random;
 //import java.nio.charset.Charset;
 import java.util.Scanner;
 import org.zeromq.ZMQ;
@@ -55,8 +56,6 @@ public class Client{
         String userInput;
         boolean running = true;
         try {
-            //Create Z Context
-            ZMQ.Context context = ZMQ.context(1);
             //Create Buffered Reader
             stdIn = new BufferedReader(new InputStreamReader(System.in));
             //Login User Sequence
@@ -103,6 +102,7 @@ public class Client{
             //Welcome the client
             System.out.println("Welcome "+userName+"!\n");
             //Once Logged in determine If Client wants to add questions to Quiz System or Take Questions from Queue
+            //Program loop
             while(running){
                 System.out.println("Select the following services:");
                 System.out.println("-------------------------\n");
@@ -123,6 +123,8 @@ public class Client{
                         //Variable to hold subject of question
                         String subject="";
                         //Client enters publisher mode::
+                        //Create Z Context
+                        ZMQ.Context context = ZMQ.context(1);
                         ZMQ.Socket publisher = context.socket(SocketType.PUSH);
                         //Connect to ip
                         publisher.connect("tcp://localhost:5555");
@@ -186,18 +188,20 @@ public class Client{
                         publisher.send(questionByteForm);
                         //Notfiy user the question is sent
                         System.out.println("Your question has been sent, Thanks!");
+                        publisher.close();
+                        context.close();
                         break;
                     }
                     //Get Quiz Questions
                     case "2":{
-                        //Client enter worker mode
-                        ZContext context2 = new ZContext();
-                        //Create Sockets
-                        ZMQ.Socket worker = context2.createSocket(SocketType.PULL);
-                        ZMQ.Socket requestSocket = context2.createSocket(SocketType.PUSH);
-                        //Bindings
-                        worker.connect("tcp://localhost:5557");
-                        requestSocket.connect("tcp://localhost:5556");
+                         //Client enter worker mode
+                         ZContext context2 = new ZContext();
+                         //Create Sockets
+                         ZMQ.Socket worker = context2.createSocket(SocketType.PULL);
+                         ZMQ.Socket requestSocket = context2.createSocket(SocketType.PUSH);
+                         //Bindings
+                         worker.connect("tcp://localhost:5557");
+                         requestSocket.connect("tcp://localhost:5556");
                         //Get the amount of questions to recieve from client
                         String numOfQuestion;
                         String subject;
@@ -219,7 +223,6 @@ public class Client{
                                 int recievedQuestions=0;
                                 //Send the request for the questions
                                 requestSocket.send(data,0);
-
                                 //Recieve Questions
                                 System.out.println("Waiting to recieve questions from queue...\n");
                                 while(recievedQuestions != Integer.parseInt(numOfQuestion)){
@@ -275,19 +278,22 @@ public class Client{
                             }
                                 
                         }
+                        worker.close();
+                        requestSocket.close();
+                        context2.close();
                         break;
                     }
                     //Generate Random Test
                     case "3":{
-
-                        //Client enter worker mode
-                        ZContext context2 = new ZContext();
-                        //Create Sockets
-                        ZMQ.Socket worker = context2.createSocket(SocketType.PULL);
-                        ZMQ.Socket requestSocket = context2.createSocket(SocketType.PUSH);
-                        //Bindings
-                        worker.connect("tcp://localhost:5557");
-                        requestSocket.connect("tcp://localhost:5556");
+                         //Client enter worker mode
+                         ZContext context2 = new ZContext();
+                         //Create Sockets
+                         ZMQ.Socket worker = context2.createSocket(SocketType.PULL);
+                         ZMQ.Socket requestSocket = context2.createSocket(SocketType.PUSH);
+                         //Bindings
+                         worker.connect("tcp://localhost:5557");
+                         requestSocket.connect("tcp://localhost:5556");
+                        boolean testCreate=true;
                         //Get the amount of questions to recieve from client
                         String subject="";
                         String data;
@@ -324,25 +330,22 @@ public class Client{
                                 break;
                             }
                             case "4":{
+                                testCreate =false;
                                 break;
                             }
                         }
                          //Create the new file with the test questions
+                         if(testCreate){
                             int recievedQuestions =0;
-                            // Specify the file path
-                            String filePath = "test.txt";
+                            Random random = new Random();
+                            // Define the range (inclusive)
+                            int min = 1;
+                            int max = 1000;
+                            // Generate a random number within the range
+                            int randomInRange = random.nextInt(max - min + 1) + min;
                             try {
-                                 // Create a File object representing the file
-                                File file = new File(filePath);
-
-                                // Check if the file already exists
-                                if (!file.exists()) {
-                                    // If the file doesn't exist, create a new file
-                                    file.createNewFile();
-                                    System.out.println("File created: " + filePath);
-                                }
                                 // Wrap the FileWriter in a BufferedWriter for efficient writing
-                                BufferedWriter writer = new BufferedWriter(new FileWriter("test.txt",true));
+                                BufferedWriter writer = new BufferedWriter(new FileWriter("test"+randomInRange+".txt",true));
                                 //Setup Test
                                 writer.write(subject +" Test:\n\n");
                                 while(recievedQuestions != 10){
@@ -352,15 +355,18 @@ public class Client{
                                         recievedQuestions++;
                                     }
                                 }
-                                System.out.println("Test Created: test.txt");
+                                System.out.println("Test Created: "+"test"+randomInRange+".txt");
                                 writer.close();
                                 Thread.sleep(1000);
 
                             } catch (Exception e) {
                                 // TODO: handle exception
                             }
+                         }
+                         worker.close();
+                         requestSocket.close();
+                         context2.close();
                         break;
-                        
                     }
                     //View Own Submitted Questions
                     case "4":{

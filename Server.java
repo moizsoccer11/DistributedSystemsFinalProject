@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -61,11 +63,11 @@ public class Server {
     public static void main(String[] args) {
         //Queues:
         //Science Question Queues
-        Queue<String> scienceQueue = new LinkedList<>();
+        Queue<String> scienceQueue = new ConcurrentLinkedQueue<>();
         //Math Question Queues
-        Queue<String> mathQueue = new LinkedList<>();
+        Queue<String> mathQueue = new ConcurrentLinkedQueue<>();
         //English Question Queue
-        Queue<String> englishQueue = new LinkedList<>();
+        Queue<String> englishQueue = new ConcurrentLinkedQueue<>();
 
         try {
 
