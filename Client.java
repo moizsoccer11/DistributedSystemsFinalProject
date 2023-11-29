@@ -342,7 +342,7 @@ public class Client{
                                     System.out.println("File created: " + filePath);
                                 }
                                 // Wrap the FileWriter in a BufferedWriter for efficient writing
-                                BufferedWriter writer = new BufferedWriter(new FileWriter("test.txt",false));
+                                BufferedWriter writer = new BufferedWriter(new FileWriter("test.txt",true));
                                 //Setup Test
                                 writer.write(subject +" Test:\n\n");
                                 while(recievedQuestions != 10){
