@@ -2,3 +2,7 @@
 SoccerMan/moiz
 User/login
 New/new
+Cool/nov30
+New User/account
+1/y
+Hi/hi

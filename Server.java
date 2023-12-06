@@ -193,10 +193,13 @@ public class Server {
                        for(int i=0; i<Integer.parseInt(splitter[0]); i++){
                             //deqeue a task from queue
                             String nextQuestion = scienceQueue.poll();
+                            //Indicate its a Science question
+                            String nextQuestionSend= "Science Question:" + nextQuestion;
                             //check if there is a task
                             if(nextQuestion != null){
+                                System.out.println("Polling Science Queue...");
                                 System.out.println("Sending Question:" + nextQuestion);
-                                responseSocket.send(nextQuestion.getBytes(),0);
+                                responseSocket.send(nextQuestionSend.getBytes(),0);
                             }
                         }
                     }
@@ -204,10 +207,13 @@ public class Server {
                        for(int i=0; i<Integer.parseInt(splitter[0]); i++){
                             //deqeue a task from queue
                             String nextQuestion = mathQueue.poll();
+                            //Indicate its a Math question
+                            String nextQuestionSend= "Math Question:" + nextQuestion;
                             //check if there is a task
                             if(nextQuestion != null){
+                                System.out.println("Polling Math Queue...");
                                 System.out.println("Sending Question:" + nextQuestion);
-                                responseSocket.send(nextQuestion.getBytes(),0);
+                                responseSocket.send(nextQuestionSend.getBytes(),0);
                             }
                         }
                     }
@@ -215,13 +221,17 @@ public class Server {
                        for(int i=0; i<Integer.parseInt(splitter[0]); i++){
                             //deqeue a task from queue
                             String nextQuestion = englishQueue.poll();
+                            //Indicate its a English question
+                            String nextQuestionSend= "English Question:" + nextQuestion;
                             //check if there is a task
                             if(nextQuestion != null){
+                                System.out.println("Polling English Queue...");
                                 System.out.println("Sending Question:" + nextQuestion);
-                                responseSocket.send(nextQuestion.getBytes(),0);
+                                responseSocket.send(nextQuestionSend.getBytes(),0);
                             }
                         }
                     }
+
                 }
 
             }
